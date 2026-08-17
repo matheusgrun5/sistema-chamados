@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HelpDesk | Sistema de Chamados</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+
+  <div class="layout">
+
+    <!-- Menu lateral -->
+    <aside class="sidebar">
+
+      <div class="sidebar-logo">
+        <span class="logo-icone">⚙</span>
+        <span class="logo-texto">HelpDesk</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item ativo" data-secao="dashboard">
+          <span class="nav-icone">▦</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-secao="novo-chamado">
+          <span class="nav-icone">＋</span>
+          <span>Novo Chamado</span>
+        </a>
+        <a href="#" class="nav-item" data-secao="chamados">
+          <span class="nav-icone">☰</span>
+          <span>Chamados</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-rodape">
+        <p>Suporte Técnico</p>
+        <p>N1 / N2</p>
+      </div>
+
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="conteudo">
+
+      <!-- Barra de alertas SLA -->
+      <div id="barra-sla" class="barra-sla oculto">
+        <span>⚠ SLA CRÍTICO:</span>
+        <span id="mensagem-sla"></span>
+      </div>  
+
+      <!-- Cabeçalho -->
+      <header class="cabecalho">
+        <div>
+          <h1>Sistema de Chamados</h1>
+          <p class="subtitulo">Central de Suporte Técnico — Gestão em TI</p>
+        </div>
+        <div class="relogio">
+          <p>Data e hora</p>
+          <span id="hora">00:00:00</span>
+        </div>
+      </header>
+
+      <!-- Dashboard de métricas -->
+      <section id="secao-dashboard">
+        <section class="cartoes">
+          <div class="cartao azul">
+            <p class="cartao-titulo">Total de Chamados</p>
+            <span class="cartao-valor" id="total-chamados">0</span>
+          </div>
+          <div class="cartao amarelo">
+            <p class="cartao-titulo">Em Atendimento</p>
+            <span class="cartao-valor" id="total-atendimento">0</span>
+          </div>
+          <div class="cartao vermelho">
+            <p class="cartao-titulo">Críticos</p>
+            <span class="cartao-valor" id="total-criticos">0</span>
+          </div>
+          <div class="cartao verde">
+            <p class="cartao-titulo">Resolvidos Hoje</p>
+            <span class="cartao-valor" id="total-resolvidos">0</span>
+          </div>
+        </section>
+      </section>
+
+      <!-- Formulário de novo chamado -->
+      <section id="secao-novo-chamado" class="card-section oculto">
+
+        <h2 class="section-titulo">Abrir Novo Chamado</h2>
+
+        <form id="formChamado">
+
+          <div class="form-grid">
+
+            <div class="campo">
+              <label for="solicitante">Solicitante</label>
+              <input type="text" id="solicitante" placeholder="Nome do usuário" required />
+            </div>
+
+            <div class="campo">
+              <label for="setor">Setor</label>
+              <input type="text" id="setor" placeholder="Ex: Financeiro, RH, TI" required />
+            </div>
+
+            <div class="campo">
+              <label for="categoria">Categoria</label>
+              <select id="categoria" required>
+                <option value="">Selecione...</option>
+                <option value="Hardware">Hardware</option>
+                <option value="Software">Software</option>
+                <option value="Rede">Rede</option>
+                <option value="Acesso">Acesso</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+
+            <div class="campo">
+              <label for="prioridade">Prioridade</label>
+              <select id="prioridade" required>
+                <option value="">Selecione...</option>
+                <option value="baixa">Baixa</option>
+                <option value="media">Média</option>
+                <option value="alta">Alta</option>
+                <option value="critica">Crítica</option>
+              </select>
+            </div>
+
+          </div>
+
+          <div class="campo">
+            <label for="descricao">Descrição do problema</label>
+            <textarea id="descricao" rows="4" placeholder="Descreva o problema detalhadamente..." required></textarea>
+          </div>
+
+          <button type="submit">Abrir Chamado</button>
+
+        </form>
+
+      </section>
+
+      <!-- Lista de chamados -->
+      <section id="secao-chamados" class="card-section oculto">
+
+        <div class="tabela-header">
+          <h2 class="section-titulo">Chamados</h2>
+          <div class="tabela-controles">
+            <div class="exportar-wrapper">
+              <button type="button" id="btn-exportar">Exportar ▾</button>
+              <div id="exportar-menu" class="exportar-menu oculto">
+                <button type="button" id="btn-pdf">Exportar PDF</button>
+                <button type="button" id="btn-excel">Exportar Excel</button>
+              </div>
+            </div>
+            <input type="text" id="busca" placeholder="Buscar por protocolo ou solicitante..." />
+            <select id="filtro-status">
+              <option value="todos">Todos os status</option>
+              <option value="aberto">Aberto</option>
+              <option value="atendimento">Em Atendimento</option>
+              <option value="resolvido">Resolvido</option>
+            </select>
+            <select id="filtro-prioridade">
+              <option value="todos">Todas as prioridades</option>
+              <option value="critica">Crítica</option>
+              <option value="alta">Alta</option>
+              <option value="media">Média</option>
+              <option value="baixa">Baixa</option>
+            </select>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Protocolo</th>
+              <th>Solicitante</th>
+              <th>Setor</th>
+              <th>Categoria</th>
+              <th>Prioridade</th>
+              <th>Status</th>
+              <th>Aberto em</th>
+              <th>SLA</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-chamados"></tbody>
+        </table>
+
+        <p id="lista-vazia" class="lista-vazia">Nenhum chamado encontrado.</p>
+
+        <div id="paginacao" class="paginacao"></div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Modal de detalhes -->
+  <div id="modal-detalhes" class="modal-overlay oculto">
+    <div class="modal modal-grande">
+      <div class="modal-topo">
+        <h3 class="modal-titulo" id="detalhe-protocolo">CHM-000000</h3>
+        <button type="button" id="fechar-detalhes">✕</button>
+      </div>
+      <div class="modal-corpo">
+        <div class="detalhe-grid">
+          <div class="detalhe-item">
+            <p class="detalhe-label">Solicitante</p>
+            <p class="detalhe-valor" id="detalhe-solicitante"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Setor</p>
+            <p class="detalhe-valor" id="detalhe-setor"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Categoria</p>
+            <p class="detalhe-valor" id="detalhe-categoria"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Prioridade</p>
+            <p class="detalhe-valor" id="detalhe-prioridade"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Status</p>
+            <p class="detalhe-valor" id="detalhe-status"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">SLA</p>
+            <p class="detalhe-valor" id="detalhe-sla"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Aberto em</p>
+            <p class="detalhe-valor" id="detalhe-abertura"></p>
+          </div>
+          <div class="detalhe-item">
+            <p class="detalhe-label">Resolvido em</p>
+            <p class="detalhe-valor" id="detalhe-resolucao"></p>
+          </div>
+        </div>
+        <div class="detalhe-descricao">
+        <p class="detalhe-label">Descrição do problema</p>
+        <p class="detalhe-valor" id="detalhe-descricao"></p>
+      </div>
+
+      <div class="comentarios-section">
+        <p class="detalhe-label">Comentários</p>
+        <ul id="lista-comentarios"></ul>
+        <div class="comentario-form">
+          <textarea id="novo-comentario" rows="2" placeholder="Adicionar comentário..."></textarea>
+          <button type="button" id="btn-comentar">Comentar</button>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmação -->
+  <div id="modal-overlay" class="modal-overlay oculto">
+    <div class="modal">
+      <h3 class="modal-titulo">Excluir Chamado</h3>
+      <p class="modal-texto">Tem certeza que deseja excluir este chamado? Esta ação não pode ser desfeita.</p>
+      <div class="modal-acoes">
+        <button type="button" id="modal-cancelar">Cancelar</button>
+        <button type="button" id="modal-confirmar">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
