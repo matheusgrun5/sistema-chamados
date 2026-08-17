@@ -39,7 +39,7 @@ Você pode testar abrindo novos chamados e usando todas as funcionalidades.
 - Busca por protocolo ou solicitante
 - Paginação com 10 chamados por página
 - Exportação de relatórios em PDF e Excel
-- Dashboard com métricas em tempo real
+- Dashboard com métricas atualizadas automaticamente
 - Menu lateral com navegação entre seções
 - Deploy com HTTPS via GitHub Pages
 
